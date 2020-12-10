@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/Golemstorm/zylog/color"
+	"github.com/Golemstorm/zylog/reverse"
 	"io"
 	"net"
 	"os"
@@ -53,9 +54,21 @@ const (
 )
 
 const (
-	time_format = "20060102"
+	time_format      = "20060102"
+	month_day_format = "0102"
+	east_egg_time    = "0229"
 )
 
+func logformat(msg string, times time.Time) string {
+	return fmt.Sprintf("%v %v", times.Format(time.RFC3339), msg)
+}
+func printlog(msg string, times time.Time) {
+	if times.Format(month_day_format) == east_egg_time {
+		fmt.Println(reverse.Reverse(msg))
+	} else {
+		fmt.Println(msg)
+	}
+}
 func Error(err error) {
 	errmsg := err.Error()
 	var log = log{
@@ -73,7 +86,7 @@ func Error(err error) {
 		fmt.Println(err)
 		return
 	}
-	fmt.Println(color.Red(string(debug.Stack()) + errmsg))
+	printlog(color.Red(logformat("[error] "+string(debug.Stack())+errmsg, time.Now())), time.Now())
 	sendLog(string(a))
 
 }
@@ -93,7 +106,7 @@ func Warn(msg string) {
 		fmt.Println(err)
 		return
 	}
-	fmt.Println(color.Blue(string(debug.Stack()) + msg))
+	printlog(color.Blue(logformat("[warn] "+string(debug.Stack())+msg, time.Now())), time.Now())
 	sendLog(string(a))
 
 }
@@ -113,7 +126,7 @@ func Info(msg string) {
 		fmt.Println(err)
 		return
 	}
-	fmt.Println(color.Green(string(debug.Stack()) + msg))
+	printlog(color.Green(logformat("[info] "+string(debug.Stack())+msg, time.Now())), time.Now())
 	sendLog(string(a))
 }
 
@@ -248,7 +261,6 @@ func getLocalIP() (ipv4 string) {
 	return
 }
 
-//CreateDir  文件夹创建
 func createDir(path string) error {
 	err := os.MkdirAll(path, os.ModePerm)
 	if err != nil {
@@ -258,7 +270,6 @@ func createDir(path string) error {
 	return nil
 }
 
-//IsExist  判断文件夹/文件是否存在  存在返回 true
 func isExist(f string) bool {
 	_, err := os.Stat(f)
 	return err == nil || os.IsExist(err)
