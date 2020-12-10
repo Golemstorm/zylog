@@ -91,7 +91,8 @@ func Error(err error) {
 
 }
 
-func Warn(msg string) {
+func Warn(msg string, args ...interface{}) {
+	msg = fmt.Sprintf(msg, args...)
 	var log = log{
 		Level:        l_warn,
 		Topic:        logconfig.Topic,
@@ -106,12 +107,14 @@ func Warn(msg string) {
 		fmt.Println(err)
 		return
 	}
+
 	printlog(color.Blue(logformat("[warn] "+string(debug.Stack())+msg, time.Now())), time.Now())
 	sendLog(string(a))
 
 }
 
-func Info(msg string) {
+func Info(msg string, args ...interface{}) {
+	msg = fmt.Sprintf(msg, args...)
 	var log = log{
 		Level:        l_info,
 		Topic:        logconfig.Topic,
