@@ -44,7 +44,7 @@ var ReverseMap = map[string]string{
 	"/":  "\\",
 }
 
-func Reverse(org string) (ressult string) {
+func Reverse(org string) (result string) {
 	b := strings.Split(org, "")
 	var a = make([]string, 0)
 	for i := len(b) - 1; i >= 0; i = i - 1 {
