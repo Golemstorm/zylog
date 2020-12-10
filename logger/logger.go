@@ -63,6 +63,7 @@ func Error(err error) {
 		Topic:        logconfig.Topic,
 		Host:         logconfig.Host,
 		Version:      logconfig.Version,
+		Type:         logconfig.Type,
 		ShortMessage: errmsg,
 		FullMessage:  string(debug.Stack()) + errmsg,
 		Timestamp:    time.Now().Unix(),
