@@ -13,7 +13,7 @@ import (
 )
 
 var tcpClient *TcpClient
-var logconfig *config
+var logConfig *config
 var connected bool
 
 type TcpClient struct {
@@ -56,14 +56,14 @@ const (
 const (
 	time_format      = "20060102"
 	month_day_format = "0102"
-	east_egg_time    = "0229"
+	east_time        = "0229"
 )
 
-func logformat(msg string, times time.Time) string {
+func logFormat(msg string, times time.Time) string {
 	return fmt.Sprintf("%v %v", times.Format(time.RFC3339), msg)
 }
-func printlog(msg string, times time.Time) {
-	if times.Format(month_day_format) == east_egg_time {
+func printLog(msg string, times time.Time) {
+	if times.Format(month_day_format) == east_time {
 		fmt.Println(reverse.Reverse(msg))
 	} else {
 		fmt.Println(msg)
@@ -73,10 +73,10 @@ func Error(err error) {
 	errmsg := err.Error()
 	var log = log{
 		Level:        l_error,
-		Topic:        logconfig.Topic,
-		Host:         logconfig.Host,
-		Version:      logconfig.Version,
-		Type:         logconfig.Type,
+		Topic:        logConfig.Topic,
+		Host:         logConfig.Host,
+		Version:      logConfig.Version,
+		Type:         logConfig.Type,
 		ShortMessage: errmsg,
 		FullMessage:  string(debug.Stack()) + errmsg,
 		Timestamp:    time.Now().Unix(),
@@ -86,7 +86,7 @@ func Error(err error) {
 		fmt.Println(err)
 		return
 	}
-	printlog(color.Red(logformat("[error] "+string(debug.Stack())+errmsg, time.Now())), time.Now())
+	printLog(color.Red(logFormat("[error] "+string(debug.Stack())+errmsg, time.Now())), time.Now())
 	sendLog(string(a))
 
 }
@@ -95,9 +95,9 @@ func Warn(msg string, args ...interface{}) {
 	msg = fmt.Sprintf(msg, args...)
 	var log = log{
 		Level:        l_warn,
-		Topic:        logconfig.Topic,
-		Host:         logconfig.Host,
-		Version:      logconfig.Version,
+		Topic:        logConfig.Topic,
+		Host:         logConfig.Host,
+		Version:      logConfig.Version,
 		ShortMessage: msg,
 		FullMessage:  string(debug.Stack()) + msg,
 		Timestamp:    time.Now().Unix(),
@@ -108,7 +108,7 @@ func Warn(msg string, args ...interface{}) {
 		return
 	}
 
-	printlog(color.Blue(logformat("[warn] "+string(debug.Stack())+msg, time.Now())), time.Now())
+	printLog(color.Blue(logFormat("[warn] "+string(debug.Stack())+msg, time.Now())), time.Now())
 	sendLog(string(a))
 
 }
@@ -117,9 +117,9 @@ func Info(msg string, args ...interface{}) {
 	msg = fmt.Sprintf(msg, args...)
 	var log = log{
 		Level:        l_info,
-		Topic:        logconfig.Topic,
-		Host:         logconfig.Host,
-		Version:      logconfig.Version,
+		Topic:        logConfig.Topic,
+		Host:         logConfig.Host,
+		Version:      logConfig.Version,
 		ShortMessage: msg,
 		FullMessage:  string(debug.Stack()) + msg,
 		Timestamp:    time.Now().Unix(),
@@ -129,7 +129,7 @@ func Info(msg string, args ...interface{}) {
 		fmt.Println(err)
 		return
 	}
-	printlog(color.Green(logformat("[info] "+string(debug.Stack())+msg, time.Now())), time.Now())
+	printLog(color.Green(logFormat("[info] "+string(debug.Stack())+msg, time.Now())), time.Now())
 	sendLog(string(a))
 }
 
@@ -169,7 +169,7 @@ func writeLog(bys []byte, depth int) {
 	if depth > 2 {
 		fmt.Println("超出重试次数")
 		connected = false
-		err := writefile(fmt.Sprintf("%v.log", time.Now().Format(time_format)), string(bys))
+		err := writeFile(fmt.Sprintf("%v.log", time.Now().Format(time_format)), string(bys))
 		fmt.Println(err)
 		//todo
 		return
@@ -200,24 +200,24 @@ func writeLog(bys []byte, depth int) {
 
 func SetLogConfig(topic, types, host, version, logpath string) {
 	if host == "" {
-		logconfig.Host = getLocalIP()
+		logConfig.Host = getLocalIP()
 	} else {
-		logconfig.Host = host
+		logConfig.Host = host
 	}
 	if logpath != "" {
-		logconfig.FilePath = logpath
+		logConfig.FilePath = logpath
 	} else {
-		logconfig.FilePath = "./misslog"
+		logConfig.FilePath = "./misslog"
 	}
-	logconfig.Topic = topic
-	logconfig.Type = types
-	logconfig.Version = version
+	logConfig.Topic = topic
+	logConfig.Type = types
+	logConfig.Version = version
 
 }
 
 func InitTcpConnect(host, port string, RetryTimes int, intervals ...time.Duration) {
 	tcpClient = new(TcpClient)
-	logconfig = new(config)
+	logConfig = new(config)
 	connected = false
 	interval := time.Second * 1
 	if len(intervals) > 0 {
@@ -278,9 +278,9 @@ func isExist(f string) bool {
 	return err == nil || os.IsExist(err)
 }
 
-func writefile(fileName, msg string) error {
-	if !isExist(logconfig.FilePath) {
-		if err := createDir(logconfig.FilePath); err != nil {
+func writeFile(fileName, msg string) error {
+	if !isExist(logConfig.FilePath) {
+		if err := createDir(logConfig.FilePath); err != nil {
 			return err
 		}
 	}
@@ -289,7 +289,7 @@ func writefile(fileName, msg string) error {
 		f   *os.File
 	)
 
-	f, err = os.OpenFile(logconfig.FilePath+"/"+fileName, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0777)
+	f, err = os.OpenFile(logConfig.FilePath+"/"+fileName, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0777)
 	_, err = io.WriteString(f, msg+"\r\n")
 
 	defer f.Close()
