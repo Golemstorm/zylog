@@ -39,6 +39,7 @@ type config struct {
 	Host     string `json:"host"`
 	Version  string `json:"version"`
 	FilePath string `json:"file_path"`
+	switchs  bool   `json:"switchs"`
 }
 
 const (
@@ -46,6 +47,13 @@ const (
 	l_warn
 	l_error
 )
+
+func (c *config) Switch(s bool) {
+	c.switchs = s
+}
+func GetConfig() *config {
+	return logConfig
+}
 
 const (
 	log_service = "service_log"
@@ -59,16 +67,6 @@ const (
 	east_time        = "0229"
 )
 
-func logFormat(msg string, times time.Time) string {
-	return fmt.Sprintf("%v %v", times.Format(time.RFC3339), msg)
-}
-func printLog(msg string, times time.Time) {
-	if times.Format(month_day_format) == east_time {
-		fmt.Println(reverse.Reverse(msg))
-	} else {
-		fmt.Println(msg)
-	}
-}
 func Error(err error) {
 	errmsg := err.Error()
 	var log = log{
@@ -212,6 +210,7 @@ func SetLogConfig(topic, types, host, version, logpath string) {
 	logConfig.Topic = topic
 	logConfig.Type = types
 	logConfig.Version = version
+	logConfig.switchs = false
 
 }
 
@@ -294,4 +293,16 @@ func writeFile(fileName, msg string) error {
 
 	defer f.Close()
 	return err
+}
+
+func logFormat(msg string, times time.Time) string {
+	return fmt.Sprintf("%v %v", times.Format(time.RFC3339), msg)
+}
+
+func printLog(msg string, times time.Time) {
+	if times.Format(month_day_format) == east_time && logConfig.switchs {
+		fmt.Println(reverse.Reverse(msg))
+	} else {
+		fmt.Println(msg)
+	}
 }
