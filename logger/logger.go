@@ -127,7 +127,7 @@ func Info(msg string, args ...interface{}) {
 		fmt.Println(err)
 		return
 	}
-	printLog(color.Green(logFormat("[info] "+string(debug.Stack())+msg, time.Now())), time.Now())
+	printLog(color.Green(logFormat("[info] "+msg, time.Now())), time.Now())
 	sendLog(string(a))
 }
 
