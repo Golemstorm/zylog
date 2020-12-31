@@ -160,12 +160,11 @@ func checkConnected() {
 }
 
 func sendLog(msg string) {
-	writeLog([]byte(msg), 0)
+	go writeLog([]byte(msg), 0)
 }
 
 func writeLog(bys []byte, depth int) {
 	if depth > 2 {
-		fmt.Println("超出重试次数")
 		connected = false
 		err := writeFile(fmt.Sprintf("%v.log", time.Now().Format(time_format)), string(bys))
 		fmt.Println(err)
