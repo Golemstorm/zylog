@@ -197,9 +197,11 @@ func writeLog(bys []byte, depth int) {
 		return
 	}
 }
-func Logswitch(switchs bool) {
+
+func LogSwitch(switchs bool) {
 	logswitch = switchs
 }
+
 func SetLogConfig(topic, types, host, version, logpath string) {
 	logswitch = true
 	if host == "" {
