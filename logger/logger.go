@@ -155,7 +155,7 @@ func tcpClientConnect() {
 }
 
 func checkConnected() {
-	if !connected {
+	if !connected && logswitch {
 		tcpClientConnect()
 	}
 }
