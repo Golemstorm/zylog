@@ -15,6 +15,7 @@ import (
 var tcpClient *TcpClient
 var logConfig *config
 var connected bool
+var logswitch bool
 
 type TcpClient struct {
 	Host       string
@@ -160,7 +161,9 @@ func checkConnected() {
 }
 
 func sendLog(msg string) {
-	go writeLog([]byte(msg), 0)
+	if logswitch {
+		go writeLog([]byte(msg), 0)
+	}
 }
 
 func writeLog(bys []byte, depth int) {
@@ -194,8 +197,11 @@ func writeLog(bys []byte, depth int) {
 		return
 	}
 }
-
+func Logswitch(switchs bool) {
+	logswitch = switchs
+}
 func SetLogConfig(topic, types, host, version, logpath string) {
+	logswitch = true
 	if host == "" {
 		logConfig.Host = getLocalIP()
 	} else {
