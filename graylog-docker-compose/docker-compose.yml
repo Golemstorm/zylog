@@ -24,10 +24,10 @@ services:
     image: graylog/graylog:4.0
     environment:
       # CHANGE ME (must be at least 16 characters)!
-      - GRAYLOG_PASSWORD_SECRET=somepasswordpepper
+      - GRAYLOG_PASSWORD_SECRET=xxxxxxxx
       # Password: admin
-      - GRAYLOG_ROOT_PASSWORD_SHA2=8c6976e5b5410415bde908bd4dee15dfb167a9c873fc4bb8a81f6f2ab448a918
-      - GRAYLOG_HTTP_EXTERNAL_URI=http://10.128.0.180:9000/
+      - GRAYLOG_ROOT_PASSWORD_SHA2=xxxxxxxxxxx
+      - GRAYLOG_HTTP_EXTERNAL_URI=http://10.0.0.1:9000/
     restart: always
     depends_on:
       - mongo
