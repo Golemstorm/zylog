@@ -15,7 +15,13 @@ import (
 var tcpClient *TcpClient
 var logConfig *config
 var connected bool
-var logswitch bool
+var ifSendLog bool
+
+func init() {
+	tcpClient = new(TcpClient)
+	logConfig = new(config)
+	ifSendLog = false
+}
 
 type TcpClient struct {
 	Host       string
@@ -70,66 +76,74 @@ const (
 
 func Error(err error) {
 	errmsg := err.Error()
-	var log = log{
-		Level:        l_error,
-		Topic:        logConfig.Topic,
-		Host:         logConfig.Host,
-		Version:      logConfig.Version,
-		Type:         logConfig.Type,
-		ShortMessage: errmsg,
-		FullMessage:  string(debug.Stack()) + errmsg,
-		Timestamp:    time.Now().Unix(),
-	}
-	a, err := json.Marshal(log)
-	if err != nil {
-		fmt.Println(err)
-		return
-	}
+
 	printLog(color.Red(logFormat("[error] "+string(debug.Stack())+errmsg, time.Now())), time.Now())
-	sendLog(string(a))
+	if ifSendLog {
+		var log = log{
+			Level:        l_error,
+			Topic:        logConfig.Topic,
+			Host:         logConfig.Host,
+			Version:      logConfig.Version,
+			Type:         logConfig.Type,
+			ShortMessage: errmsg,
+			FullMessage:  string(debug.Stack()) + errmsg,
+			Timestamp:    time.Now().Unix(),
+		}
+		a, err := json.Marshal(log)
+		if err != nil {
+			fmt.Println(err)
+			return
+		}
+		sendLog(string(a))
+	}
 
 }
 
 func Warn(msg string, args ...interface{}) {
 	msg = fmt.Sprintf(msg, args...)
-	var log = log{
-		Level:        l_warn,
-		Topic:        logConfig.Topic,
-		Host:         logConfig.Host,
-		Version:      logConfig.Version,
-		ShortMessage: msg,
-		FullMessage:  string(debug.Stack()) + msg,
-		Timestamp:    time.Now().Unix(),
-	}
-	a, err := json.Marshal(log)
-	if err != nil {
-		fmt.Println(err)
-		return
-	}
-
 	printLog(color.Blue(logFormat("[warn] "+string(debug.Stack())+msg, time.Now())), time.Now())
-	sendLog(string(a))
+	if ifSendLog {
+		var log = log{
+			Level:        l_warn,
+			Topic:        logConfig.Topic,
+			Host:         logConfig.Host,
+			Version:      logConfig.Version,
+			ShortMessage: msg,
+			FullMessage:  string(debug.Stack()) + msg,
+			Timestamp:    time.Now().Unix(),
+		}
+		a, err := json.Marshal(log)
+		if err != nil {
+			fmt.Println(err)
+			return
+		}
+		sendLog(string(a))
+	}
 
 }
 
 func Info(msg string, args ...interface{}) {
 	msg = fmt.Sprintf(msg, args...)
-	var log = log{
-		Level:        l_info,
-		Topic:        logConfig.Topic,
-		Host:         logConfig.Host,
-		Version:      logConfig.Version,
-		ShortMessage: msg,
-		FullMessage:  string(debug.Stack()) + msg,
-		Timestamp:    time.Now().Unix(),
-	}
-	a, err := json.Marshal(log)
-	if err != nil {
-		fmt.Println(err)
-		return
-	}
+
 	printLog(color.Green(logFormat("[info] "+msg, time.Now())), time.Now())
-	sendLog(string(a))
+	if ifSendLog {
+		var log = log{
+			Level:        l_info,
+			Topic:        logConfig.Topic,
+			Host:         logConfig.Host,
+			Version:      logConfig.Version,
+			ShortMessage: msg,
+			FullMessage:  string(debug.Stack()) + msg,
+			Timestamp:    time.Now().Unix(),
+		}
+		a, err := json.Marshal(log)
+		if err != nil {
+			fmt.Println(err)
+			return
+		}
+		sendLog(string(a))
+	}
+
 }
 
 func getTcpClient() *TcpClient {
@@ -155,15 +169,15 @@ func tcpClientConnect() {
 }
 
 func checkConnected() {
-	if !connected && logswitch {
+	if !connected && ifSendLog {
 		tcpClientConnect()
 	}
 }
 
 func sendLog(msg string) {
-	if logswitch {
-		go writeLog([]byte(msg), 0)
-	}
+
+	go writeLog([]byte(msg), 0)
+
 }
 
 func writeLog(bys []byte, depth int) {
@@ -198,19 +212,19 @@ func writeLog(bys []byte, depth int) {
 	}
 }
 
-func LogSwitch(switchs bool) {
-	logswitch = switchs
+func SendLogSwitch(switchs bool) {
+	ifSendLog = switchs
 }
 
-func SetLogConfig(topic, types, host, version, logpath string) {
-	logswitch = true
+func SetLogConfig(topic, types, host, version, logPath string) {
+	//logswitch = true
 	if host == "" {
 		logConfig.Host = getLocalIP()
 	} else {
 		logConfig.Host = host
 	}
-	if logpath != "" {
-		logConfig.FilePath = logpath
+	if logPath != "" {
+		logConfig.FilePath = logPath
 	} else {
 		logConfig.FilePath = "./misslog"
 	}
@@ -244,30 +258,19 @@ func InitTcpConnect(host, port string, RetryTimes int, intervals ...time.Duratio
 }
 
 func getLocalIP() (ipv4 string) {
-	var (
-		addrs   []net.Addr
-		addr    net.Addr
-		ipNet   *net.IPNet // IP地址
-		isIpNet bool
-	)
-	// 获取所有网卡
 	addrs, err := net.InterfaceAddrs()
 	if err != nil {
-		fmt.Println(err)
 		return ""
 	}
-	// 取第一个非lo的网卡IP
-	for _, addr = range addrs {
-		// 这个网络地址是IP地址: ipv4, ipv6
-		if ipNet, isIpNet = addr.(*net.IPNet); isIpNet && !ipNet.IP.IsLoopback() {
-			// 跳过IPV6
-			if ipNet.IP.To4() != nil {
-				ipv4 = ipNet.IP.String() // 192.168.1.1
-				return
-			}
+
+	for _, addr := range addrs {
+		ipNet, isIpNet := addr.(*net.IPNet)
+		if isIpNet && !ipNet.IP.IsLoopback() && ipNet.IP.To4() != nil {
+			return ipNet.IP.String()
 		}
 	}
-	return
+
+	return ""
 }
 
 func createDir(path string) error {
@@ -307,7 +310,7 @@ func logFormat(msg string, times time.Time) string {
 }
 
 func printLog(msg string, times time.Time) {
-	if times.Format(month_day_format) == east_time && logConfig.switchs {
+	if times.Format(month_day_format) == east_time || logConfig.switchs {
 		fmt.Println(reverse.Reverse(msg))
 	} else {
 		fmt.Println(msg)
